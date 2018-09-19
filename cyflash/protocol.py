@@ -445,6 +445,30 @@ class SerialTransport(object):
             raise BootloaderTimeoutError("Timed out waiting for Bootloader response.")
         return data
 
+class EthernetTransport(object):
+    def __init__(self, f, verbose):
+        self.f = f
+        self._verbose = verbose
+
+    def send(self, data):
+        if self._verbose:
+            for char in data:
+                print("s: 0x%02x" % ord(char))
+        self.f.send(data)
+
+    def recv(self):
+        data = self.f.recv(4)
+        if len(data) < 4:
+            raise BootloaderTimeoutError("Timed out waiting for Bootloader response.")
+        size = struct.unpack("<H", data[-2:])[0]
+        data += self.f.recv(size + 3)
+        if self._verbose:
+            for part in data:
+                print("r: 0x%02x" % ord(part))
+        if len(data) < size + 7:
+            raise BootloaderTimeoutError("Timed out waiting for Bootloader response.")
+        return data
+
 
 class CANbusTransport(object):
     MESSAGE_CLASS = None

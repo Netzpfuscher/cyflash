@@ -29,6 +29,13 @@ group.add_argument(
     default=None,
     help="Use a serial interface")
 group.add_argument(
+    '--eth',
+    action='store',
+    dest='eth',
+    metavar='IP',
+    default=None,
+    help="Use a ethernet interface")
+group.add_argument(
     '--canbus',
     action='store',
     dest='canbus',
@@ -207,6 +214,15 @@ def make_session(args, checksum_type):
         ser.flushInput()  # need to clear any garbage off the serial port
         ser.flushOutput()
         transport = protocol.SerialTransport(ser, args.verbose)
+    elif args.eth:
+        import socket
+	if args.eth.find(":") == -1:
+		print "No port specified " + args.eth + ":xx"
+		exit()
+	ip = args.eth.split(":")
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((ip[0], int(ip[1])))
+	transport = protocol.EthernetTransport(s, args.verbose)
     elif args.canbus:
         import can
         # Remaining configuration options should follow python-can practices
